@@ -1,7 +1,5 @@
 from datetime import datetime
-from flaskTest import db
-
-
+from flasktest import db
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -11,7 +9,6 @@ class User(db.Model):
     password = db.Column(db.String(60), nullable=False)
     posts = db.relationship('Post', backref='author', lazy=True) # lazy: sqlalchemy carica i dati solo quando
                                                                     # necessario in un unico momento
-
     def __repr__(self):
         return f"User('{self.username}', '{self.email}', '{self.image_file}')"
 
@@ -22,6 +19,5 @@ class Post(db.Model):
     content = db.Column(db.Text(20), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)  # user e' il nome di default della tabella creata
                                                                 # dalla classe User
-
     def __repr__(self):
         return f"post('{self.title}', '{self.date_posted}')"

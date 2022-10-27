@@ -1,14 +1,7 @@
-from flask import Flask, render_template, url_for, flash, redirect
-from flask_sqlalchemy import SQLAlchemy
-from forms import RegistrationForm, LoginForm, ResumePasswordForm
-from models import Post, User
+from flask import render_template, url_for, flash, redirect
+from flasktest.forms import RegistrationForm, LoginForm, ResumePasswordForm
 
-app = Flask(__name__)
-
-app.config['SECRET_KEY'] = 'f79649168b66944ccffaf0f15a84717b'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
-db = SQLAlchemy(app)
-
+from flasktest import app
 
 posts = [
     {
@@ -24,6 +17,7 @@ posts = [
         'date_posted': 'October 15, 2022',
     }
     ]
+
 
 @app.route("/")
 @app.route("/home")
@@ -66,7 +60,3 @@ def reset_pwd():
 
     return render_template('reset-password.html', title='Reset Password', form=form)
 
-
-
-if __name__=="__main__":
-    app.run(debug=True)
