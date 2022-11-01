@@ -1,3 +1,6 @@
+import os.path
+import secrets
+from PIL import Image
 from flask import render_template, url_for, flash, redirect, request
 from flasktest.forms import RegistrationForm, LoginForm, ResumePasswordForm, UpdateUserAccount
 
@@ -78,17 +81,36 @@ def logout():
     logout_user()
     return redirect(url_for('home'))
 
+def save_picture(form_picture):
+    old_image_fn = current_user.image_file
+
+    random_hex = secrets.token_hex(8)
+    _, f_ext = os.path.splitext(form_picture.filename)
+    picture_fn = random_hex + f_ext
+    f_path = os.path.join(app.root_path, 'static/profile_pic', picture_fn)
+    output_size = (125, 125)
+    i = Image.open(form_picture)
+    i.thumbnail(output_size)
+    i.save(f_path)
+    if old_image_fn != 'default.jpg':
+        old_f_path = os.path.join(app.root_path, 'static/profile_pic', old_image_fn)
+        os.remove(old_f_path)
+    return picture_fn
+
 @app.route("/account", methods = ["GET", "POST"])
 @login_required
 def account():
     form = UpdateUserAccount()
     if form.validate_on_submit():
-            current_user.username = form.username.data
-            current_user.email = form.email.data
+        if form.picture.data:
+            file_pic = save_picture(form.picture.data)
+            current_user.image_file = file_pic
+        current_user.username = form.username.data
+        current_user.email = form.email.data
 
-            db.session.commit()
-            flash(f'Profile updated!', 'success')
-            return redirect(url_for('account'))
+        db.session.commit()
+        flash(f'Profile updated!', 'success')
+        return redirect(url_for('account'))
     elif request.method == 'GET':
         form.username.data = current_user.username
         form.email.data = current_user.email
