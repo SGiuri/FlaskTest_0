@@ -1,8 +1,8 @@
 import os.path
 import secrets
 from PIL import Image
-from flask import render_template, url_for, flash, redirect, request
-from flasktest.forms import RegistrationForm, LoginForm, ResumePasswordForm, UpdateUserAccount
+from flask import render_template, url_for, flash, redirect, request, abort
+from flasktest.forms import RegistrationForm, LoginForm, ResumePasswordForm, UpdateUserAccount, PostForm, UpdatePostForm
 
 from flasktest import app, db, bcrypt
 from flasktest.models import User, Post
@@ -27,6 +27,7 @@ posts = [
 @app.route("/")
 @app.route("/home")
 def home():
+    posts = Post.query.all()
     return render_template('home.html', posts=posts)
 
 @app.route("/about")
@@ -119,3 +120,47 @@ def account():
 
     image_file = url_for("static", filename= "profile_pic/" + current_user.image_file)
     return render_template('account.html', title='Account', image_file=image_file, form=form)
+
+@app.route("/post/new", methods = ["GET", "POST"])
+@login_required
+def newpost():
+    form = PostForm()
+    if form.validate_on_submit():
+        post = Post(title = form.title.data, content = form.content.data, author = current_user)
+        db.session.add(post)
+        db.session.commit()
+        flash(f'Post published updated!', 'success')
+        return redirect(url_for('home'))
+
+    return render_template('newpost.html', title='New Post', form=form)
+
+@app.route("/post/<int:post_id>")
+def post(post_id):
+    post = Post.query.get_or_404(post_id)
+    return render_template('post.html', title=post.title, post=post)
+
+@app.route("/post/<int:post_id>/edit", methods = ["GET", "POST"])
+@login_required
+def edit_post(post_id):
+    form = UpdatePostForm()
+    post = Post.query.get_or_404(post_id)
+
+    if post.author != current_user:
+        abort(403)
+
+    if form.validate_on_submit():
+
+
+        post.title = form.title.data
+        post.content = form.content.data
+        db.session.commit()
+        flash(f'Post updated!', 'success')
+        return redirect(url_for('home'))
+
+
+    elif request.method == 'GET':
+        form.title.data = post.title
+        form.content.data = post.content
+
+
+    return render_template('edit_post.html', title=post.title, form=form)
